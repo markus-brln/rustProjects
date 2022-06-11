@@ -1,7 +1,9 @@
-use ferris_says::say; // from the previous step
+#![allow(dead_code)] // An attribute to hide warnings for unused code.
+
+use ferris_says::say;
 use std::io::{stdout, BufWriter};
 
-#[allow(dead_code)]
+
 pub fn begin() {
     let stdout = stdout();
     let message = String::from("Hello fellow Rustaceans!");
@@ -23,7 +25,6 @@ pub fn begin() {
     );
 }
 
-#[allow(dead_code)]
 pub fn debug() {
     #[derive(Debug)]
     struct DebugPrintable(i32);
@@ -57,7 +58,6 @@ impl fmt::Display for Structure {
     }
 }
 
-#[allow(dead_code)]
 pub fn display() {
     let hello: u128 = 354435436546345879798743535;
     println!("{hello}");
@@ -65,7 +65,6 @@ pub fn display() {
     println!("{}", Structure(22));
 }
 
-#[allow(dead_code)]
 pub fn primitive_types() {
     // Variables can be type annotated.
     let logical: bool = true;
@@ -109,7 +108,6 @@ pub fn reverse(pair: (i32, bool)) -> (bool, i32) {
 #[derive(Debug)]
 struct Matrix(f32, f32, f32, f32);
 
-#[allow(dead_code)]
 pub fn tuples() {
     let long_tuple = (1u8, 2u16, 3u32, 4u64,
         -1i8, -2i16, -3i32, -4i64,
@@ -145,7 +143,6 @@ pub fn analyze_slice(slice: &[i32]) { // This function borrows a slice
     println!("the slice has {} elements", slice.len());
 }
 
-#[allow(dead_code)]
 pub fn arrays() {
     let xs: [i32; 5] = [1, 2, 3, 4, 5];
     let ys: [i32; 500] = [0; 500];
