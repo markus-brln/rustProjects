@@ -15,4 +15,5 @@
 
 **/.vscode/
 **/**/*.o
-**/main
+**/**/*.a
+**/**/generated_deps
