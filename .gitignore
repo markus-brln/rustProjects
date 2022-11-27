@@ -17,3 +17,5 @@
 **/**/*.o
 **/**/*.a
 **/**/generated_deps
+
+.idea
