@@ -6,7 +6,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 fn main() {
     // create at least as many workers as jobs or you will deadlock yourself
     let n_workers = 42;
-    let n_jobs = 99;
+    let n_jobs = 23;
     let pool = ThreadPool::new(n_workers);
     let an_atomic = Arc::new(AtomicUsize::new(0));
 
