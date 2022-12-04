@@ -1,4 +1,4 @@
-import { AppShell, Navbar, Header, Text } from '@mantine/core';
+import { AppShell, Navbar, Header } from '@mantine/core';
 import HomePage from '../HomePage/HomePage';
 
 
