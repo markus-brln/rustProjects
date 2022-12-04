@@ -3,8 +3,9 @@ import { useCallback } from 'react';
 
 
 export default function useGetUrl() {
-    
-    return useCallback(() => axios.get("http://127.0.0.1:8000/get")
+    const baseUrl = "http://localhost:8000";
+
+    return useCallback((url: string) => axios.get(baseUrl + "/" + url)
           .then((response: { data: any; }) => {
             return response.data;
           })
