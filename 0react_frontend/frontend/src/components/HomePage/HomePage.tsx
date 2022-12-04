@@ -18,6 +18,11 @@ export default function HomePage() {
   [getUrl, setResponseImg]
 );
 
+  const reset = useCallback(() => {
+    setResponseText(null);
+    setResponseImg(undefined);
+  }, [setResponseImg, setResponseText])
+
   return (
     <Flex
     mih={50}
@@ -28,9 +33,9 @@ export default function HomePage() {
     direction="column"
     wrap="wrap"
   >
-    <Button onClick={() => setResponseText(null)}>Reset</Button>
-    <Button onClick={() => onClickSetJsonText("get")}>Button 1</Button>
-    <Button onClick={() => onClickSetImg("get-image")}>Button 2</Button>
+    <Button onClick={() => reset()}>Reset</Button>
+    <Button onClick={() => onClickSetJsonText("get")}>Get JSON</Button>
+    <Button onClick={() => onClickSetImg("get-image")}>Get Image base64</Button>
     <Text>{JSON.stringify(responseText, null, "\t")}</Text>
     <Image
       width={500}
