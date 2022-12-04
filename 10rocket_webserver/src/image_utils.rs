@@ -8,5 +8,5 @@ pub fn image_to_base64(path: String) -> String {
         .unwrap();
     let res_base64 = base64::encode(image_data);
 
-    return format!("data:image/png;base64,{}", res_base64)
+    return format!("data:image/png;base64,{}", res_base64);
 }
