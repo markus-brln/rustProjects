@@ -17,5 +17,6 @@
 **/**/*.o
 **/**/*.a
 **/**/generated_deps
+**/**/node_modules
 
 .idea
