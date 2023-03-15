@@ -1,15 +1,44 @@
 version: "3"
 
 services:
+  traefik:
+    image: "traefik:v2.9"
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+      - "5173:5173"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  whoami:
+    image: "traefik/whoami"
+    container_name: "simple-service"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
+      - "traefik.http.routers.whoami.entrypoints=web"
+
   frontend:
-    build: ./frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
     volumes:
       - ./frontend:/usr/src/app
     ports:
       - "5173:5173"
+#      - "3000:3000"
     command: npm run dev -- --host
-#    links:
-#      - app  # up the backend before frontend
+    depends_on:
+      - app
+    networks:
+      - mynetwork
 
   app:
     build: ./app
@@ -17,25 +46,9 @@ services:
       - "8000:8000"
     volumes:
       - ./app:/usr/src/app
-#    command: cargo run  # run the app with reload on code change (cargo-watch installed in app/Dockerfile)
     command: cargo watch -x run  # run the app with reload on code change (cargo-watch installed in app/Dockerfile)
-#    links:
-#      - db
-    # diesel infer_schema macro gives warnings with this flag.
-    # environment:
-    #   - CARGO_INCREMENTAL=1
-#    command: bash -c "bash ./wait-for-it.sh db:5432 -q -- diesel setup && cargo watch -x run"
+    networks:
+      - mynetwork
 
-#  db:
-#    image: "postgres:9"
-#    ports:
-#      - "5432:5432"
-#    volumes:
-#      - pgdata:/var/lib/postgresql/data/pgdata
-#    environment:
-#      POSTGRES_PASSWORD: supersecretpassword
-#      PGDATA: /var/lib/postgresql/data/pgdata
-
-# cargo will try to redownload packages @ docker-compose up so store them here.
-volumes:
-  pgdata: {}
+networks:
+  mynetwork:

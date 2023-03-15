@@ -10,7 +10,7 @@ RUN cargo install --path .
 
 EXPOSE 8000
 
-CMD ["app"]
+CMD ["cargo", "run"]
 
 #FROM rust:1.65
 #

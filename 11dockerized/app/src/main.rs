@@ -26,7 +26,7 @@ struct ImageData {
 
 
 #[rocket::post("/post", format = "json", data = "<user>")]
-fn post_data(user: Json<User>) -> Json<User> { 
+fn post_data(user: Json<User>) -> Json<User> {
     let name: String = user.name.clone();
     let age: u8 = user.age.clone();
 
