@@ -1,7 +1,7 @@
 use image::{ImageResult, DynamicImage, ImageOutputFormat, open};
 use std::io::Cursor;
 
-pub fn image_to_base64(path: String) -> String {
+pub fn open_image_to_base64(path: String) -> String {
     let img = open(path).unwrap();
     let mut image_data: Vec<u8> = Vec::new();
     img.write_to(&mut Cursor::new(&mut image_data), ImageOutputFormat::Png)

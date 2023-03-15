@@ -1,6 +1,6 @@
 import { Flex, Button, Text, Image } from '@mantine/core';
 import { useCallback, useState } from 'react';
-import useGetUrl from '../../hooks/useGetUrl/useGetUrl';
+import {useGetUrl, usePostUrl} from '../../hooks/useUrl';
 import { FaBrain } from "react-icons/fa";
 
 
@@ -9,8 +9,13 @@ export default function HomePage() {
   const [responseImg, setResponseImg] = useState(undefined);
 
   const getUrl = useGetUrl();
+  const postUrl = usePostUrl();
 
-  const onClickSetJsonText = useCallback((url: string) => getUrl(url).then(data => setResponseText(data)), 
+  const onClickGetJson = useCallback((url: string) => getUrl(url).then(data => setResponseText(data)),
+    [getUrl, setResponseText]
+  );
+  const onClickPostJson = useCallback((url: string) => postUrl(url, { "name": "My name", "age": 8 })
+  .then(data => setResponseText(data)),
     [getUrl, setResponseText]
   );
 
@@ -34,7 +39,8 @@ export default function HomePage() {
     wrap="wrap"
   >
     <Button onClick={() => reset()}>Reset</Button>
-    <Button onClick={() => onClickSetJsonText("get")}>Get JSON</Button>
+    <Button onClick={() => onClickGetJson("get-json")}>Get JSON</Button>
+    <Button onClick={() => onClickPostJson("post-json")}>Post JSON</Button>
     <Button onClick={() => onClickSetImg("get-image")}>Get Image base64</Button>
     <Text>{JSON.stringify(responseText, null, "\t")}</Text>
     <Image

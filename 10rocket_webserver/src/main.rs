@@ -6,18 +6,19 @@ use rocket::{
     serde::{json::Json, Deserialize, Serialize},
 };
 
+#[path = "./api/user.rs"]
+mod user;
+use user::{
+    post_json_data,
+    get_json_data
+};
+
 mod cors_config;
-mod image_utils;
-
 use cors_config::{CORS};
-use image_utils::image_to_base64;
 
+mod image_utils;
+use image_utils::open_image_to_base64;
 
-#[derive(Deserialize, Serialize)]
-struct User {
-    name: String,
-    age: u8,
-}
 
 #[derive(Deserialize, Serialize)]
 struct ImageData {
@@ -25,27 +26,9 @@ struct ImageData {
 }
 
 
-#[rocket::post("/post", format = "json", data = "<user>")]
-fn post_data(user: Json<User>) -> Json<User> { 
-    let name: String = user.name.clone();
-    let age: u8 = user.age.clone();
-
-    Json(User { name, age })
-}
-
-
-#[rocket::get("/get", format = "json")]
-fn get_data() -> Json<User> {
-    let name: String = "My name".to_owned();
-    let age: u8 = 8;
-
-    return Json(User { name, age });
-}
-
-
 #[rocket::get("/get-image", format = "json")]
 fn get_image() -> Json<ImageData> {
-    let image: String = image_to_base64("assets/jellyfish.png".to_owned());
+    let image: String = open_image_to_base64("assets/jellyfish.png".to_owned());
     // let img: String = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=".to_string();
     return Json(ImageData { data: image });
 }
@@ -55,7 +38,7 @@ fn get_image() -> Json<ImageData> {
 async fn main() {
     if let Err(err) = rocket::build()
         .attach(CORS)
-        .mount("/", rocket::routes![post_data, get_data, get_image])
+        .mount("/", rocket::routes![post_json_data, get_json_data, get_image])
         .launch()
         .await
     {
