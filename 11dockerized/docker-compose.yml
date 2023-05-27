@@ -1,54 +1,48 @@
-version: "3"
+version: '3.8'
 
 services:
-  traefik:
-    image: "traefik:v2.9"
-    container_name: "traefik"
-    command:
-      #- "--log.level=DEBUG"
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-    ports:
-      - "80:80"
-      - "8080:8080"
-      - "5173:5173"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-
-  whoami:
-    image: "traefik/whoami"
-    container_name: "simple-service"
+  backend:
+    build: ./app
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
-      - "traefik.http.routers.whoami.entrypoints=web"
+      - traefik.enable=true
+      - traefik.http.routers.backend.rule=Host(`example.com`) && PathPrefix(`/api`)
+      - traefik.http.services.backend.loadbalancer.server.port=8080
+    networks:
+      - frontend
+      - backend
 
   frontend:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
-    volumes:
-      - ./frontend:/usr/src/app
-    ports:
-      - "5173:5173"
-#      - "3000:3000"
-    command: npm run dev -- --host
-    depends_on:
-      - app
+    build: ./frontend
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.frontend.rule=Host(`example.com`) && PathPrefix(`/`)
+      - traefik.http.services.frontend.loadbalancer.server.port=3000
     networks:
-      - mynetwork
+      - frontend
 
-  app:
-    build: ./app
+  traefik:
+    image: traefik:v2.4
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
     ports:
-      - "8000:8000"
+      - "80:80"
+      - "443:443"
     volumes:
-      - ./app:/usr/src/app
-    command: cargo watch -x run  # run the app with reload on code change (cargo-watch installed in app/Dockerfile)
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/traefik.yml:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.traefik.rule=Host(`example.com`) && PathPrefix(`/traefik`)
+      - traefik.http.routers.traefik.service=api@internal
+      - traefik.http.services.traefik.loadbalancer.server.port=8080
     networks:
-      - mynetwork
+      - frontend
+      - backend
 
 networks:
-  mynetwork:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
