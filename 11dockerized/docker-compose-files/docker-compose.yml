@@ -1,0 +1,166 @@
+version: '3.5'
+services:
+  proxy:
+    restart: always
+    image: traefik:2.4
+    ports:
+      - "8080:8080"    # Traefik dashboard
+      - "80:80"        # HTTP
+      - "443:443"      # HTTPS
+      - "35729:35729"  # Livereloading rollup
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./static.yaml:/etc/traefik/traefik.yaml
+      - ./configuration:/configuration
+      - ./certs:/certs
+    labels:
+      - traefik.enable=false
+
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    labels:
+      - traefik.http.routers.redisinsight-tls.rule=Host(`redisinsight.verifai.localhost`)
+      - traefik.http.routers.redisinsight-tls.tls=true
+      - traefik.http.routers.redisinsight.rule=Host(`redisinsight.verifai.localhost`)
+      - traefik.http.services.redisinsight.loadbalancer.server.port=8001
+    volumes:
+      - redisinsight_data:/db
+
+  portainer:
+    restart: always
+    image: portainer/portainer-ce
+    command:
+      - --admin-password-file=/tmp/portainer-password
+    labels:
+      - traefik.http.routers.portainer-tls.rule=Host(`portainer.verifai.localhost`)
+      - traefik.http.routers.portainer-tls.tls=true
+      - traefik.http.routers.portainer.rule=Host(`portainer.verifai.localhost`)
+      - traefik.http.services.portainer.loadbalancer.server.port=9000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+      - ./portainer-password:/tmp/portainer-password
+
+  adminer:
+    restart: always
+    image: adminer
+    environment:
+      - ADMINER_DESIGN='pepa-linha'
+    labels:
+      - traefik.http.routers.mailhog-tls.rule=Host(`adminer.verifai.localhost`)
+      - traefik.http.routers.mailhog-tls.tls=true
+      - traefik.http.routers.adminer-tls.rule=Host(`adminer.verifai.localhost`)
+      - traefik.http.routers.adminer-tls.tls=true
+  
+  whoami:
+    restart: always
+    image: traefik/whoami
+    labels:
+      - traefik.http.routers.whoami-tls.rule=Host(`whoami.verifai.localhost`)
+      - traefik.http.routers.whoami-tls.tls=true
+      - traefik.http.routers.whoami.rule=Host(`whoami.verifai.localhost`)
+
+  mailhog:
+    image: mailhog/mailhog
+    logging:
+      driver: 'none'
+    labels:
+      - traefik.http.routers.mailhog-tls.rule=Host(`mailhog.verifai.localhost`)
+      - traefik.http.routers.mailhog-tls.tls=true
+      - traefik.http.routers.mailhog.rule=Host(`mailhog.verifai.localhost`)
+      - traefik.http.services.mailhog.loadbalancer.server.port=8025
+    networks:
+      default:
+        aliases:
+          - mailhog
+          - mailhog.verifai.localhost
+          - mailhog.backend-ci
+  
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.3
+    environment:
+      - xpack.security.enabled=false
+      - node.name=es01
+      - cluster.name=es-verifai-devsetup-cluster
+      - bootstrap.memory_lock=true
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - 9200:9200
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es-data-01:/usr/share/elasticsearch/data
+    labels:
+      - traefik.enable=false
+    healthcheck:
+      test:
+          [
+          "CMD-SHELL",
+          "curl --fail http://localhost:9200 || exit 1",
+          ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+    networks:
+      default:
+        aliases:
+          - elasticsearch.verifai.localhost
+  
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.5.3
+    volumes:
+      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    depends_on:
+      - elasticsearch
+    networks:
+      default:
+        aliases:
+          - logstash.verifai.localhost
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.5.3
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch.verifai.localhost:9200
+    labels:
+      - traefik.http.routers.kibana-tls.rule=Host(`kibana.verifai.localhost`)
+      - traefik.http.routers.kibana-tls.tls=true
+      - traefik.http.routers.kibana.rule=Host(`kibana.verifai.localhost`)
+      - traefik.http.services.kibana.loadbalancer.server.port=5601
+    healthcheck:
+      test:
+          [
+          "CMD-SHELL",
+          "curl --fail http://localhost:5601 || exit 1",
+          ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+  
+  es-init:  # initializes ES and Kibana with some preconfigured settings
+    image: curlimages/curl
+    restart: on-failure
+    depends_on:
+    - elasticsearch
+    - kibana
+    volumes:
+    - ./:/usr/share/devsetup
+    entrypoint:
+    - /bin/sh
+    - -c
+    command:
+    - /usr/share/devsetup/elastic-init.sh
+
+networks:
+  default:
+    name: verifai-traefik
+    driver: bridge
+
+volumes:
+  portainer_data:
+  es-data-01:
+  redisinsight_data:

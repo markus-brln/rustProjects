@@ -16,8 +16,8 @@ export function usePostUrl() {
     const baseUrl = "http://localhost:8000";
 
     return useCallback((url: string, payload: object) => axios.post(baseUrl + "/" + url, payload)
-          .then((response: { data: any; }) => {
+        .then((response: { data: any; }) => {
             return response.data;
-          })
-          .catch(error => error.message), [])
+        })
+        .catch(error => error.message), [])
 }

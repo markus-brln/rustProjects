@@ -10,7 +10,8 @@ use rocket::{
 mod user;
 use user::{
     post_json_data,
-    get_json_data
+    get_json_data,
+    options_json_data
 };
 
 mod cors_config;
@@ -26,7 +27,7 @@ struct ImageData {
 }
 
 
-#[rocket::get("/get-image", format = "json")]
+#[rocket::get("/get-image", format = "application/json")]
 fn get_image() -> Json<ImageData> {
     let image: String = open_image_to_base64("assets/jellyfish.png".to_owned());
     // let img: String = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=".to_string();
@@ -38,7 +39,7 @@ fn get_image() -> Json<ImageData> {
 async fn main() {
     if let Err(err) = rocket::build()
         .attach(CORS)
-        .mount("/", rocket::routes![post_json_data, get_json_data, get_image])
+        .mount("/", rocket::routes![post_json_data, get_json_data, options_json_data, get_image])
         .launch()
         .await
     {

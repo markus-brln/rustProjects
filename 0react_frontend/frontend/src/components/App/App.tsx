@@ -1,5 +1,8 @@
 import { AppShell, Navbar, Header } from '@mantine/core';
 import HomePage from '../HomePage/HomePage';
+import axios from 'axios'
+
+axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 
 export default function App() {
