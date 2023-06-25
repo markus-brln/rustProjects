@@ -1,0 +1,74 @@
+version: '3.5'
+
+services:
+  traefik:
+    restart: always
+    image: traefik:v2.5
+#    command:
+#      - "--api.insecure=true"
+#      - "--providers.docker=true"
+#      - "--providers.docker.exposedbydefault=false"
+#      - "--entrypoints.web.address=:80"
+    ports:
+      - "8080:8080"    # Traefik dashboard
+      - "80:80"        # HTTP
+      - "443:443"      # HTTPS
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - traefik.enable=false
+
+#  whoami:
+#    image: containous/whoami
+#    labels:
+#      - "traefik.enable=true"
+#      - "traefik.http.routers.whoami.rule=Host(`whoami.local`)"
+#      - "traefik.http.services.whoami.loadbalancer.server.port=80"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    volumes:
+      - ./frontend:/usr/src/app
+    labels:
+      - traefik.http.routers.frontend-tls.rule=Host(`frontend.markus.localhost`)
+      - traefik.http.routers.frontend-tls.tls=true
+      - traefik.http.routers.frontend.rule=Host(`frontend.markus.localhost`)
+      - traefik.http.services.frontend.loadbalancer.server.port=5173
+
+    ports:
+      - "5173:5173"
+#      - "3000:3000"
+    command: npm run dev -- --host
+    depends_on:
+      - app
+    networks:
+      default:
+        aliases:
+          - app.markus
+          - frontend.markus.localhost
+
+  app:
+    build: ./app
+#    ports:
+#      - "8000:8000"
+    volumes:
+      - ./app:/usr/src/app
+    command: cargo watch -x run  # run the app with reload on code change (cargo-watch installed in app/Dockerfile)
+    labels:
+      - traefik.http.routers.backend-tls.rule=Host(`backend.markus.localhost`)
+      - traefik.http.routers.backend-tls.tls=true
+      - traefik.http.routers.backend.rule=Host(`backend.markus.localhost`)
+      - traefik.http.services.backend.loadbalancer.server.port=8000
+    networks:
+      default:
+        aliases:
+          - app.markus
+          - backend.markus.localhost
+
+
+networks:
+  default:
+    name: mynetwork
+    driver: bridge
